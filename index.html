@@ -6,7 +6,7 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
 
     <base href="/">
-    <title>Document</title>
+    <title>HomeScapes</title>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/4.8.1/pixi.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/2.1.2/TweenMax.min.js"></script>
@@ -39,8 +39,11 @@
         img: "assets/img/btn.png",
         width: 364,
         height: 124,
-        x: 502,
-        y: 499,
+        x: 502 + 364 / 2,
+        y: 499 + 124 / 2,
+
+        animation: {x: 1.1, y: 1.1, repeat: -1, yoyo: true, ease: "ease-in"},
+        zIndex: 100,
       },
       book_stand: {
         id: "book_stand",
@@ -69,6 +72,7 @@
         height: 244,
         x: 1122,
         y: 438,
+        zIndex: 1,
       },
       globe: {
         id: "globe",
@@ -140,19 +144,20 @@
 
       stair_0:  {
         id: "old_stair",
-        img: "stairs/old_stair.png",
+        img: "assets/img/stairs/old_stair.png",
         x: 833,
         y: 54,
       },
       stair_1: {
         id: "stair_1",
-        img: "stairs/new_stair_01.png",
+        img: "assets/img/stairs/new_stair_01.png",
         x: 908,
         y: 18,
+        alpha: 0,
       },
       stair_1m: {
         id: "stair_1m",
-        img: "stairs_mini/01.png",
+        img: "assets/img/stairs_mini/01.png",
         width: 125,
         height: 125,
         x: 775,
@@ -160,13 +165,14 @@
       },
       stair_2: {
         id: "new_stair_02",
-        img: "stairs/new_stair_02.png",
+        img: "assets/img/stairs/new_stair_02.png",
         x: 898,
         y: 28,
+        alpha: 0,
       },
       stair_2m: {
         id: "stair_2m",
-        img: "stairs_mini/02.png",
+        img: "assets/img/stairs_mini/02.png",
         width: 125,
         height: 125,
         x: 925,
@@ -174,17 +180,18 @@
       },
       stair_3: {
         id: "stair_3",
-        img: "stairs/new_stair_03.png",
+        img: "assets/img/stairs/new_stair_03.png",
         x: 910,
         y: -13,
+        alpha: 0,
       },
       stair_3m: {
         id: "stair_3m",
-        img: "stairs_mini/03.png",
+        img: "assets/img/stairs_mini/03.png",
         width: 125,
         height: 125,
         x: 1075,
-        y: 5,
+        y: 15,
       },
     };
 
@@ -202,13 +209,13 @@
     const model = {
       scene: [
         ALL_OBJECTS.Austin,
-        ALL_OBJECTS.btn,
         ALL_OBJECTS.book_stand,
         ALL_OBJECTS.globe,
         ALL_OBJECTS.Layer_1,
         ALL_OBJECTS.logo,
         ALL_OBJECTS.plant,
         ALL_OBJECTS.table,
+        ALL_OBJECTS.btn,
       ],
       stairs: [
         ALL_OBJECTS.stair_0,
@@ -253,6 +260,11 @@
         child.position.y = config.y; // WIDTH * window.innerWidth;
         child.zIndex = config.zIndex;
 
+        if (config.animation) {
+          child.anchor.set(0.5);
+          this.animate(child.scale, config.animation);
+        }
+
         container.addChild(child);
         return child;
       },
@@ -270,10 +282,10 @@
         return result;
       },
       printVariant: function (from, config, onClick) {
-        const icon_bg = view.addSprite("assets/img/circle.png", {alpha: 0, x: config.x, y: config.y - 125});
+        const icon_bg = view.addSprite("assets/img/circle.png", {alpha: 0, x: config.x, y: - 125});
         const m_stair = view.addSprite(from, {alpha: 0, x: config.x + 25, y: config.y - 125});
 
-        view.animate(icon_bg, {alpha: 1, duration: 0.8, y: config.y, ease: "elastic"});
+        view.animate(icon_bg, {alpha: 1, duration: 0.8, y: 10, ease: "elastic"});
         view.animate(m_stair, {alpha: 1, duration: 0.8, y: config.y, ease: "elastic"});
 
         m_stair.interactive = true;
@@ -282,16 +294,12 @@
         m_stair.on('pointerdown', onClick);
       },
       printVariants: function (onClick) {
-        const m_stair_1 = this.printVariant("assets/img/stairs_mini/01.png", ALL_OBJECTS.stair_1m, () => onClick(1));
-        const m_stair_2 = this.printVariant("assets/img/stairs_mini/02.png", ALL_OBJECTS.stair_2m, () => onClick(2));
-        const m_stair_3 = this.printVariant("assets/img/stairs_mini/03.png", ALL_OBJECTS.stair_3m, () => onClick(3));
-      },
-      gameLoad: function () {
-
+        const m_stair_1 = this.printVariant(ALL_OBJECTS.stair_1m.img, ALL_OBJECTS.stair_1m, () => onClick(1));
+        const m_stair_2 = this.printVariant(ALL_OBJECTS.stair_2m.img, ALL_OBJECTS.stair_2m, () => onClick(2));
+        const m_stair_3 = this.printVariant(ALL_OBJECTS.stair_3m.img, ALL_OBJECTS.stair_3m, () => onClick(3));
       },
       animate: function (child, animate, callback) {
         const tl = new TimelineLite();
-        console.log('animate', child);
         tl.to(child, animate).add(callback);
         return child;
       }
@@ -315,30 +323,24 @@
       return [w, h];
     }
 
-    // container.x = app.screen.width / 2;
-    // container.y = app.screen.height / 2;
-    //
-    // container.pivot.x = container.width / 2;
-    // container.pivot.y = container.height / 2;
-
     function draw() {
       renderer.render(app.stage);
       requestAnimationFrame(draw);
     }
 
-    window.onresize = resize;
     state.scene = view.printScene(model.scene);
-    draw();
-
-    const oldStair = view.addSprite("assets/img/stairs/old_stair.png", model.stairs[0]);
+    const oldStair = view.addSprite(ALL_OBJECTS.stair_0.img, model.stairs[0]);
     state.currentStair = oldStair;
+
+    window.onresize = resize;
+
+    draw();
 
     const TIMERS = {
       ADD_OLD_STAIR: 1000,
     };
 
     let addStairTimer = setTimeout(() => {
-      console.log('add hammer');
       const hammer = view.addSprite("assets/img/icon_hammer.png", {x: 1089, y: 209, alpha: 0});
 
       view.animate(hammer, {alpha: 1, duration: 1, y: 259, ease: "elastic"});
@@ -351,16 +353,13 @@
     }, TIMERS.ADD_OLD_STAIR);
 
     function handleStairClick(idx) {
-      console.log('handleStairClick', idx);
       view.removeSprite(state.currentStair);
 
-      const stair = view.addSprite(`assets/img/${model.stairs[idx].img}`, {
-        alpha: 0,
+      const stair = view.addSprite(model.stairs[idx].img, {
+        alpha: 0.1,
         x: model.stairs[idx].x,
         y: model.stairs[idx].y - 200
       });
-
-      // view.animate(stair, {duration: 0.8, y: model.stairs[idx].y});
 
       state.currentStair = stair;
       state.currentStairIdx = idx;
@@ -395,29 +394,22 @@
     }
 
     function handleConfirmClick() {
-      console.log('handleConfirmClick');
-
       let ok = state.showConfirm;
 
       const windowLayer = view.addSprite(ALL_OBJECTS.Layer_3.img, ALL_OBJECTS.Layer_3);
       const window = view.addSprite(ALL_OBJECTS.Layer_2.img, ALL_OBJECTS.Layer_2);
+
+      view.removeSprite(state.scene.btn);
       const btn = view.addSprite(ALL_OBJECTS.btn.img, {...ALL_OBJECTS.btn, zIndex: 10});
 
       view.animate(ok, {alpha: 0, duration: 0.3}, () => view.removeSprite(ok));
-    }
-
-    function activateConfirmButton(child, onClick) {
-
     }
 
     function handleHammerClick(sprite) {
       state.stage = state.stage + 1;
 
       view.animate(sprite, {alpha: 0, duration: 0.3, y: sprite.y - 50}, () => view.removeSprite(sprite));
-
       view.printVariants(handleStairClick);
-
-      console.log('handleHammerClick', state.stage);
     }
   })
 </script>
