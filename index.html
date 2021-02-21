@@ -273,8 +273,8 @@
         const icon_bg = view.addSprite("assets/img/circle.png", {alpha: 0, x: config.x, y: config.y - 125});
         const m_stair = view.addSprite(from, {alpha: 0, x: config.x + 25, y: config.y - 125});
 
-        view.animate(icon_bg, {alpha: 1, duration: 0.8, y: config.y});
-        view.animate(m_stair, {alpha: 1, duration: 0.8, y: config.y});
+        view.animate(icon_bg, {alpha: 1, duration: 0.8, y: config.y, ease: "elastic"});
+        view.animate(m_stair, {alpha: 1, duration: 0.8, y: config.y, ease: "elastic"});
 
         m_stair.interactive = true;
         m_stair.buttonMode = true;
@@ -339,7 +339,9 @@
 
     let addStairTimer = setTimeout(() => {
       console.log('add hammer');
-      const hammer = view.addSprite("assets/img/icon_hammer.png", {x: 1089, y: 259});
+      const hammer = view.addSprite("assets/img/icon_hammer.png", {x: 1089, y: 209, alpha: 0});
+
+      view.animate(hammer, {alpha: 1, duration: 1, y: 259, ease: "elastic"});
 
       hammer.interactive = true;
       hammer.buttonMode = true;
@@ -381,7 +383,11 @@
         alpha: 0,
       });
 
-      view.animate(ok, {alpha: 1, duration: 0.8}, () => activateConfirmButton(ok, handleConfirmClick));
+      ok.interactive = true;
+      ok.buttonMode = true;
+      ok.on('pointerdown', handleConfirmClick);
+
+      view.animate(ok, {alpha: 1, duration: 0.8});
 
       state.showConfirm = ok;
 
@@ -395,18 +401,13 @@
 
       const windowLayer = view.addSprite(ALL_OBJECTS.Layer_3.img, ALL_OBJECTS.Layer_3);
       const window = view.addSprite(ALL_OBJECTS.Layer_2.img, ALL_OBJECTS.Layer_2);
-
-      // view.removeSprite(state.scene.btn);
-
       const btn = view.addSprite(ALL_OBJECTS.btn.img, {...ALL_OBJECTS.btn, zIndex: 10});
 
       view.animate(ok, {alpha: 0, duration: 0.3}, () => view.removeSprite(ok));
     }
 
     function activateConfirmButton(child, onClick) {
-      child.interactive = true;
-      child.buttonMode = true;
-      child.on('pointerdown', onClick);
+
     }
 
     function handleHammerClick(sprite) {
