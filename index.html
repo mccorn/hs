@@ -1,0 +1,430 @@
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+    <base href="/">
+    <title>Document</title>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/4.8.1/pixi.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/2.1.2/TweenMax.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.6.0/gsap.min.js"></script>
+</head>
+<body>
+
+</body>
+
+<script type="text/javascript">
+  window.onload = (() => {
+    let type = "WebGL";
+    if (!PIXI.utils.isWebGLSupported()) {
+      type = "canvas"
+    }
+
+    const WIDTH = 3387;
+    const HEIGHT = 1851;
+
+    const ALL_OBJECTS = {
+      Austin: {
+        id: "Austin",
+        width: 87,
+        height: 306,
+        x: 696,
+        y: 113,
+      },
+      btn: {
+        id: "btn",
+        img: "assets/img/btn.png",
+        width: 364,
+        height: 124,
+        x: 502,
+        y: 499,
+      },
+      book_stand: {
+        id: "book_stand",
+        width: 140,
+        height: 189,
+        x: 834,
+        y: -28,
+      },
+      choosed: {
+        id: "choosed",
+        width: 0,
+        height: 0,
+        x: 0,
+        y: 0,
+      },
+      circle: {
+        id: "circle",
+        width: 0,
+        height: 0,
+        x: 0,
+        y: 0,
+      },
+      dec_1: {
+        id: "dec_1",
+        width: 257,
+        height: 244,
+        x: 1122,
+        y: 438,
+      },
+      globe: {
+        id: "globe",
+        width: 147,
+        height: 188,
+        x: 87,
+        y: 109,
+      },
+      icon_hammer: {
+        id: "icon_hammer",
+        width: 106,
+        height: 129,
+        x: 1089,
+        y: 258,
+      },
+      Layer_1: {
+        id: "Layer_1",
+        img: "assets/img/Layer_1.png",
+        width: 375,
+        height: 307,
+        x: 127,
+        y: 324,
+      },
+      Layer_2: {
+        id: "Layer_2",
+        img: "assets/img/Layer_2.png",
+        width: 610,
+        height: 395,
+        x: 391,
+        y: 53,
+      },
+      Layer_3: {
+        id: "Layer_3",
+        img: "assets/img/Layer_3.png",
+        width: WIDTH,
+        height: HEIGHT,
+        x: 0,
+        y: 0,
+      },
+      logo: {
+        id: "logo",
+        width: 298,
+        height: 97,
+        x: 32,
+        y: 5,
+      },
+      ok: {
+        id: "ok",
+        img: "assets/img/ok.png",
+        width: 141,
+        height: 78,
+        x: 0,
+        y: 0,
+      },
+      plant: {
+        id: "plant",
+        width: 115,
+        height: 151,
+        x: 1135,
+        y: 164,
+      },
+      table: {
+        id: "table",
+        width: 302,
+        height: 222,
+        x: 202,
+        y: 196,
+      },
+
+      stair_0:  {
+        id: "old_stair",
+        img: "stairs/old_stair.png",
+        x: 833,
+        y: 54,
+      },
+      stair_1: {
+        id: "stair_1",
+        img: "stairs/new_stair_01.png",
+        x: 908,
+        y: 18,
+      },
+      stair_1m: {
+        id: "stair_1m",
+        img: "stairs_mini/01.png",
+        width: 125,
+        height: 125,
+        x: 775,
+        y: 5,
+      },
+      stair_2: {
+        id: "new_stair_02",
+        img: "stairs/new_stair_02.png",
+        x: 898,
+        y: 28,
+      },
+      stair_2m: {
+        id: "stair_2m",
+        img: "stairs_mini/02.png",
+        width: 125,
+        height: 125,
+        x: 925,
+        y: 5,
+      },
+      stair_3: {
+        id: "stair_3",
+        img: "stairs/new_stair_03.png",
+        x: 910,
+        y: -13,
+      },
+      stair_3m: {
+        id: "stair_3m",
+        img: "stairs_mini/03.png",
+        width: 125,
+        height: 125,
+        x: 1075,
+        y: 5,
+      },
+    };
+
+    PIXI.utils.sayHello(type);
+
+    let state = {
+      stage: 0,
+      currentStairIdx: 0,
+      currentStair: null,
+
+      showModal: false,
+      showConfirm: false,
+    };
+
+    const model = {
+      scene: [
+        ALL_OBJECTS.Austin,
+        ALL_OBJECTS.btn,
+        ALL_OBJECTS.book_stand,
+        ALL_OBJECTS.globe,
+        ALL_OBJECTS.Layer_1,
+        ALL_OBJECTS.logo,
+        ALL_OBJECTS.plant,
+        ALL_OBJECTS.table,
+      ],
+      stairs: [
+        ALL_OBJECTS.stair_0,
+        ALL_OBJECTS.stair_1,
+        ALL_OBJECTS.stair_2,
+        ALL_OBJECTS.stair_3,
+      ],
+      app: {
+        width: 256,         // default: 800
+        height: 256,        // default: 600
+        antialias: true,    // default: false
+        transparent: false, // default: false
+        resolution: 1       // default: 1
+      }
+    };
+
+    const controller = {};
+
+    let app = new PIXI.Application(model.app);
+    let container = new PIXI.Container();
+    let renderer = new PIXI.CanvasRenderer(window.innerWidth, window.innerHeight);
+
+    renderer.backgroundColor = 0xFFFFFF;
+
+    app.stage.addChild(container);
+
+    document.body.appendChild(renderer.view);
+
+    var size = [window.innerWidth, window.innerHeight];
+    var ratio = size[0] / size[1];
+
+    const view = {
+      removeSprite: function (child) {
+        container.removeChild(child);
+      },
+      printSprite: function (from) {
+        return new PIXI.Sprite(PIXI.Texture.from(from));
+      },
+      addSprite: function (from, config) {
+        const child = this.printSprite(from);
+        child.position.x = config.x; // WIDTH * window.innerWidth;
+        child.position.y = config.y; // WIDTH * window.innerWidth;
+        child.zIndex = config.zIndex;
+
+        container.addChild(child);
+        return child;
+      },
+      printScene: function (sceneConfig = []) {
+        const result = {};
+
+        const back = PIXI.Sprite.from('assets/img/back.png');
+
+        container.addChild(back);
+
+        sceneConfig.forEach((node, idx) => {
+          result[node.id] = this.addSprite(`assets/img/${node.id}.png`, node);
+        });
+
+        return result;
+      },
+      printVariant: function (from, config, onClick) {
+        const icon_bg = view.addSprite("assets/img/circle.png", {alpha: 0, x: config.x, y: config.y - 125});
+        const m_stair = view.addSprite(from, {alpha: 0, x: config.x + 25, y: config.y - 125});
+
+        view.animate(icon_bg, {alpha: 1, duration: 0.8, y: config.y});
+        view.animate(m_stair, {alpha: 1, duration: 0.8, y: config.y});
+
+        m_stair.interactive = true;
+        m_stair.buttonMode = true;
+
+        m_stair.on('pointerdown', onClick);
+      },
+      printVariants: function (onClick) {
+        const m_stair_1 = this.printVariant("assets/img/stairs_mini/01.png", ALL_OBJECTS.stair_1m, () => onClick(1));
+        const m_stair_2 = this.printVariant("assets/img/stairs_mini/02.png", ALL_OBJECTS.stair_2m, () => onClick(2));
+        const m_stair_3 = this.printVariant("assets/img/stairs_mini/03.png", ALL_OBJECTS.stair_3m, () => onClick(3));
+      },
+      gameLoad: function () {
+
+      },
+      animate: function (child, animate, callback) {
+        const tl = new TimelineLite();
+        console.log('animate', child);
+        tl.to(child, animate).add(callback);
+        return child;
+      }
+    };
+
+    function resize() {
+      const size = calcSize();
+      renderer.view.style.width = size[0] + 'px';
+      renderer.view.style.height = size[1] + 'px';
+    }
+
+    function calcSize() {
+      if (window.innerWidth / window.innerHeight >= ratio) {
+        var w = window.innerHeight * ratio;
+        var h = window.innerHeight;
+      } else {
+        var w = window.innerWidth;
+        var h = window.innerWidth / ratio;
+      }
+
+      return [w, h];
+    }
+
+    // container.x = app.screen.width / 2;
+    // container.y = app.screen.height / 2;
+    //
+    // container.pivot.x = container.width / 2;
+    // container.pivot.y = container.height / 2;
+
+    function draw() {
+      renderer.render(app.stage);
+      requestAnimationFrame(draw);
+    }
+
+    window.onresize = resize;
+    state.scene = view.printScene(model.scene);
+    draw();
+
+    const oldStair = view.addSprite("assets/img/stairs/old_stair.png", model.stairs[0]);
+    state.currentStair = oldStair;
+
+    const TIMERS = {
+      ADD_OLD_STAIR: 1000,
+    };
+
+    let addStairTimer = setTimeout(() => {
+      console.log('add hammer');
+      const hammer = view.addSprite("assets/img/icon_hammer.png", {x: 1089, y: 259});
+
+      hammer.interactive = true;
+      hammer.buttonMode = true;
+      hammer.on('pointerdown', () => handleHammerClick(hammer));
+
+      clearTimeout(addStairTimer);
+    }, TIMERS.ADD_OLD_STAIR);
+
+    function handleStairClick(idx) {
+      console.log('handleStairClick', idx);
+      view.removeSprite(state.currentStair);
+
+      const stair = view.addSprite(`assets/img/${model.stairs[idx].img}`, {
+        alpha: 0,
+        x: model.stairs[idx].x,
+        y: model.stairs[idx].y - 200
+      });
+
+      // view.animate(stair, {duration: 0.8, y: model.stairs[idx].y});
+
+      state.currentStair = stair;
+      state.currentStairIdx = idx;
+
+      if (state.showConfirm) view.removeSprite(state.showConfirm);
+      view.animate(stair, {alpha: 1, duration: 0.8, y: model.stairs[idx].y}, showConfirmButton);
+    }
+
+    function showConfirmButton() {
+      const circleConfig = [
+        {},
+        ALL_OBJECTS.stair_1m,
+        ALL_OBJECTS.stair_2m,
+        ALL_OBJECTS.stair_3m,
+      ][state.currentStairIdx];
+
+      const ok = view.addSprite(ALL_OBJECTS.ok.img, {
+        x: circleConfig.x + circleConfig.width / 2 - ALL_OBJECTS.ok.width / 2,
+        y: circleConfig.height + circleConfig.y,
+        alpha: 0,
+      });
+
+      view.animate(ok, {alpha: 1, duration: 0.8}, () => activateConfirmButton(ok, handleConfirmClick));
+
+      state.showConfirm = ok;
+
+      return ok;
+    }
+
+    function handleConfirmClick() {
+      console.log('handleConfirmClick');
+
+      let ok = state.showConfirm;
+
+      const windowLayer = view.addSprite(ALL_OBJECTS.Layer_3.img, ALL_OBJECTS.Layer_3);
+      const window = view.addSprite(ALL_OBJECTS.Layer_2.img, ALL_OBJECTS.Layer_2);
+
+      // view.removeSprite(state.scene.btn);
+
+      const btn = view.addSprite(ALL_OBJECTS.btn.img, {...ALL_OBJECTS.btn, zIndex: 10});
+
+      view.animate(ok, {alpha: 0, duration: 0.3}, () => view.removeSprite(ok));
+    }
+
+    function activateConfirmButton(child, onClick) {
+      child.interactive = true;
+      child.buttonMode = true;
+      child.on('pointerdown', onClick);
+    }
+
+    function handleHammerClick(sprite) {
+      state.stage = state.stage + 1;
+
+      view.animate(sprite, {alpha: 0, duration: 0.3, y: sprite.y - 50}, () => view.removeSprite(sprite));
+
+      view.printVariants(handleStairClick);
+
+      console.log('handleHammerClick', state.stage);
+    }
+  })
+</script>
+
+<style>
+    * {
+        padding: 0;
+        margin: 0
+    }
+</style>
+</html>
