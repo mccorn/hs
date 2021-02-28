@@ -18,10 +18,8 @@
 
 <script type="text/javascript">
   window.onload = (() => {
-    let type = "WebGL";
-    if (!PIXI.utils.isWebGLSupported()) {
-      type = "canvas"
-    }
+    let size = [window.innerWidth, window.innerHeight];
+    let ratio = size[0] / size[1];
 
     const WIDTH = 3387;
     const HEIGHT = 1851;
@@ -195,7 +193,14 @@
       },
     };
 
-    PIXI.utils.sayHello(type);
+    const TIMERS = {
+      ADD_OLD_STAIR: 2000,
+    };
+
+    const EVENT_TYPES = {
+      CHANGE_STAGE: "CHANGE_STAGE",
+      INIT_STAGE: "INIT_STAGE",
+    };
 
     let state = {
       stage: 0,
@@ -232,21 +237,109 @@
       }
     };
 
-    const controller = {};
+    const controller = {
+      init: function (model, view) {
+        state.scene = view.printScene(model.scene);
+        const oldStair = view.addSprite(ALL_OBJECTS.stair_0.img, model.stairs[0]);
+        state.currentStair = oldStair;
 
-    let app = new PIXI.Application(model.app);
-    let container = new PIXI.Container();
-    let renderer = new PIXI.CanvasRenderer(window.innerWidth, window.innerHeight);
+        window.onresize = view.resize;
+        draw();
 
-    renderer.backgroundColor = 0xFFFFFF;
+        let addHammerTimer = setTimeout(() => {
+          const hammer = view.addSprite("assets/img/icon_hammer.png", {x: 1089, y: 209, alpha: 0});
 
-    app.stage.addChild(container);
+          view.animate(hammer, {alpha: 1, duration: 1, y: 259, ease: "elastic"});
 
-    document.body.appendChild(renderer.view);
+          hammer.interactive = true;
+          hammer.buttonMode = true;
+          hammer.on('pointerdown', () => document.dispatchEvent(new CustomEvent(EVENT_TYPES.CHANGE_STAGE, {detail: {stage: 1}})));
 
-    var size = [window.innerWidth, window.innerHeight];
-    var ratio = size[0] / size[1];
+          state.scene.hammer = hammer;
 
+          clearTimeout(addHammerTimer);
+        }, TIMERS.ADD_OLD_STAIR);
+
+        document.addEventListener(EVENT_TYPES.CHANGE_STAGE, this.changeStage);
+        document.addEventListener(EVENT_TYPES.INIT_STAGE, this.initStage);
+      },
+      changeStage: function (e) {
+        console.log('changeStage', e?.detail?.stage);
+
+        state.stage = e?.detail?.stage;
+        document.dispatchEvent(new Event(EVENT_TYPES.INIT_STAGE));
+      },
+      initStage: function () {
+        console.log('initStage', state.stage);
+        switch (state.stage) {
+          case 1: controller.stage_01(); break;
+          case 2: controller.stage_02(); break;
+          case 3: controller.stage_03(); break;
+          case 4: controller.stage_04(); break;
+        }
+      },
+      stage_01: function() {
+        let sprite = state.scene.hammer;
+
+        view.animate(sprite, {alpha: 0, duration: 0.3, y: sprite.y - 50}, () => view.removeSprite(sprite));
+        view.printVariants(idx => {
+          state.currentStairIdx = idx;
+          document.dispatchEvent(new CustomEvent(EVENT_TYPES.CHANGE_STAGE, {detail: {stage: 2}}));
+        });
+      },
+      stage_02: function () {
+        let idx =  state.currentStairIdx;
+
+        view.removeSprite(state.currentStair);
+        if (state.showConfirm) view.removeSprite(state.showConfirm);
+
+        state.currentStair = view.addSprite(model.stairs[idx].img, {
+          alpha: 0.1,
+          x: model.stairs[idx].x,
+          y: model.stairs[idx].y - 200
+        });
+
+        view.animate(
+          state.currentStair,
+          {alpha: 1, duration: 0.8, y: model.stairs[idx].y},
+          () => controller.stage_03()
+        );
+      },
+      stage_03: function () {
+        const circleConfig = [
+          {},
+          ALL_OBJECTS.stair_1m,
+          ALL_OBJECTS.stair_2m,
+          ALL_OBJECTS.stair_3m,
+        ][state.currentStairIdx];
+
+        const ok = view.addSprite(ALL_OBJECTS.ok.img, {
+          x: circleConfig.x + circleConfig.width / 2 - ALL_OBJECTS.ok.width / 2,
+          y: circleConfig.height + circleConfig.y,
+          alpha: 0,
+        });
+
+        ok.interactive = true;
+        ok.buttonMode = true;
+        ok.on('pointerdown', () => document.dispatchEvent(new CustomEvent(EVENT_TYPES.CHANGE_STAGE, {detail: {stage: 4}})));
+        view.animate(ok, {alpha: 1, duration: 0.8});
+
+        state.showConfirm = ok;
+
+        return ok;
+      },
+      stage_04: function () {
+        let ok = state.showConfirm;
+        view.removeSprite(state.scene.btn);
+
+        const windowLayer = view.addSprite(ALL_OBJECTS.Layer_3.img, ALL_OBJECTS.Layer_3);
+        const window = view.addSprite(ALL_OBJECTS.Layer_2.img, ALL_OBJECTS.Layer_2);
+        const btn = view.addSprite(ALL_OBJECTS.btn.img, {...ALL_OBJECTS.btn, zIndex: 10});
+
+        view.animate(ok, {alpha: 0, duration: 0.3}, () => view.removeSprite(ok));
+      }
+    };
+    
     const view = {
       removeSprite: function (child) {
         container.removeChild(child);
@@ -302,115 +395,43 @@
         const tl = new TimelineLite();
         tl.to(child, animate).add(callback);
         return child;
+      },
+      resize: function () {
+        const size = this.calcSize();
+        renderer.view.style.width = size[0] + 'px';
+        renderer.view.style.height = size[1] + 'px';
+      },
+      calcSize: function () {
+        let w, h;
+
+        if (window.innerWidth / window.innerHeight >= ratio) {
+          w = window.innerHeight * ratio;
+          h = window.innerHeight;
+        } else {
+          w = window.innerWidth;
+          h = window.innerWidth / ratio;
+        }
+
+        return [w, h];
       }
     };
-
-    function resize() {
-      const size = calcSize();
-      renderer.view.style.width = size[0] + 'px';
-      renderer.view.style.height = size[1] + 'px';
-    }
-
-    function calcSize() {
-      if (window.innerWidth / window.innerHeight >= ratio) {
-        var w = window.innerHeight * ratio;
-        var h = window.innerHeight;
-      } else {
-        var w = window.innerWidth;
-        var h = window.innerWidth / ratio;
-      }
-
-      return [w, h];
-    }
 
     function draw() {
       renderer.render(app.stage);
       requestAnimationFrame(draw);
     }
 
-    state.scene = view.printScene(model.scene);
-    const oldStair = view.addSprite(ALL_OBJECTS.stair_0.img, model.stairs[0]);
-    state.currentStair = oldStair;
+    let app = new PIXI.Application(model.app);
+    let container = new PIXI.Container();
+    let renderer = new PIXI.CanvasRenderer(window.innerWidth, window.innerHeight);
 
-    window.onresize = resize;
+    renderer.backgroundColor = 0xFFFFFF;
 
-    draw();
+    app.stage.addChild(container);
 
-    const TIMERS = {
-      ADD_OLD_STAIR: 1000,
-    };
+    document.body.appendChild(renderer.view);
 
-    let addStairTimer = setTimeout(() => {
-      const hammer = view.addSprite("assets/img/icon_hammer.png", {x: 1089, y: 209, alpha: 0});
-
-      view.animate(hammer, {alpha: 1, duration: 1, y: 259, ease: "elastic"});
-
-      hammer.interactive = true;
-      hammer.buttonMode = true;
-      hammer.on('pointerdown', () => handleHammerClick(hammer));
-
-      clearTimeout(addStairTimer);
-    }, TIMERS.ADD_OLD_STAIR);
-
-    function handleStairClick(idx) {
-      view.removeSprite(state.currentStair);
-
-      const stair = view.addSprite(model.stairs[idx].img, {
-        alpha: 0.1,
-        x: model.stairs[idx].x,
-        y: model.stairs[idx].y - 200
-      });
-
-      state.currentStair = stair;
-      state.currentStairIdx = idx;
-
-      if (state.showConfirm) view.removeSprite(state.showConfirm);
-      view.animate(stair, {alpha: 1, duration: 0.8, y: model.stairs[idx].y}, showConfirmButton);
-    }
-
-    function showConfirmButton() {
-      const circleConfig = [
-        {},
-        ALL_OBJECTS.stair_1m,
-        ALL_OBJECTS.stair_2m,
-        ALL_OBJECTS.stair_3m,
-      ][state.currentStairIdx];
-
-      const ok = view.addSprite(ALL_OBJECTS.ok.img, {
-        x: circleConfig.x + circleConfig.width / 2 - ALL_OBJECTS.ok.width / 2,
-        y: circleConfig.height + circleConfig.y,
-        alpha: 0,
-      });
-
-      ok.interactive = true;
-      ok.buttonMode = true;
-      ok.on('pointerdown', handleConfirmClick);
-
-      view.animate(ok, {alpha: 1, duration: 0.8});
-
-      state.showConfirm = ok;
-
-      return ok;
-    }
-
-    function handleConfirmClick() {
-      let ok = state.showConfirm;
-
-      const windowLayer = view.addSprite(ALL_OBJECTS.Layer_3.img, ALL_OBJECTS.Layer_3);
-      const window = view.addSprite(ALL_OBJECTS.Layer_2.img, ALL_OBJECTS.Layer_2);
-
-      view.removeSprite(state.scene.btn);
-      const btn = view.addSprite(ALL_OBJECTS.btn.img, {...ALL_OBJECTS.btn, zIndex: 10});
-
-      view.animate(ok, {alpha: 0, duration: 0.3}, () => view.removeSprite(ok));
-    }
-
-    function handleHammerClick(sprite) {
-      state.stage = state.stage + 1;
-
-      view.animate(sprite, {alpha: 0, duration: 0.3, y: sprite.y - 50}, () => view.removeSprite(sprite));
-      view.printVariants(handleStairClick);
-    }
+    controller.init(model, view);
   })
 </script>
 
